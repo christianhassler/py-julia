@@ -54,7 +54,7 @@ class julia:
 		while (z0.imag < view[3]):
 			while (z0.real < view[1]):
 				if (self.is_bounded(z0)):
-					print "%f, %f;" % (z0.real, z0.imag)
+                                    print('{0},{1}'.format(z0.real,z0.imag))
 				z0 = z0 + r_unit
 				progress = progress + 1;
 				progress_bar((progress/total_progress)*100)
