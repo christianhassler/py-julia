@@ -5,7 +5,8 @@ def progress_bar(progress):
 	sys.stderr.write('\r[{0}{1}] {2}%'.format('#'*int(progress),'-'*(100-int(progress)), progress)),
 
 def Q(z,c):
-	return z * z + c
+	z2 = z * z;
+	return (z2 * z2) - z2 + c
 
 # r < |z|
 def norm_cmp(r, z):
@@ -26,7 +27,7 @@ def lazy_cmp(bounds, z):
 
 class julia:
 	_f = Q
-	_c = -1.0
+	_c = 1.0
 	_bounds = [-2,2,-2,2]
 	_res = [750.0,750.0]
 	_depth = 250
