@@ -28,27 +28,15 @@ class julia:
 	_f = Q
 	_c = -1.0
 	_bounds = [-2,2,-2,2]
-	_res = [1000.0,1000.0]
+	_res = [750.0,750.0]
 	_depth = 250
 	
-	# Is the orbit of z under f bounded (i.e. '< infinity') after 'depth' iterations?
-	def is_bounded(self,z):
-		i = 0
-		while(i < self._depth):
-			if (lazy_cmp(self._bounds,z)):
-				return 0
-			z = Q(z,self._c)
-			i = i + 1
-		return 1
-
 	def filled_julia(self,center,zoom):
 		bounds = self._bounds
 		view = [(center[0] + bounds[0]) / zoom, (center[0] + bounds[1]) / zoom, (center[1] + bounds[2]) / zoom, (center[1] + bounds[3]) / zoom]
 		r_unit = complex((view[1] - view[0]) / self._res[0])
 		i_unit = complex(0 + ((view[3] - view[2])/ self._res[1])*1j)
 		z0 = complex(view[0] + (view[2])*1j)
-		#print r_unit
-		#print i_unit
 		progress = 0
 		total_progress = self._res[0] * self._res[1]
 		while (z0.imag < view[3]):
