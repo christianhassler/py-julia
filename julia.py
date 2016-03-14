@@ -56,4 +56,4 @@ class julia:
 			z0 = z0 + i_unit
 
 j = julia()
-j.filled_julia([0.0,0.5],2.0)
+j.filled_julia([0.0,0.0],1.0)
