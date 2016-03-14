@@ -26,10 +26,10 @@ def lazy_cmp(bounds, z):
 
 class julia:
 	_f = Q
-	_c = -0.5
-	_bounds = [-1.5,1.5,-1,1]
+	_c = -1.0
+	_bounds = [-2,2,-2,2]
 	_res = [1000.0,1000.0]
-	_depth = 100
+	_depth = 250
 	
 	# Is the orbit of z under f bounded (i.e. '< infinity') after 'depth' iterations?
 	def is_bounded(self,z):
@@ -43,7 +43,7 @@ class julia:
 
 	def filled_julia(self,center,zoom):
 		bounds = self._bounds
-		view = [center[0] + (zoom * bounds[0]), center[0] + (zoom * bounds[1]), center[1] + (zoom * bounds[2]), center[1] + (zoom * bounds[3])]
+		view = [(center[0] + bounds[0]) / zoom, (center[0] + bounds[1]) / zoom, (center[1] + bounds[2]) / zoom, (center[1] + bounds[3]) / zoom]
 		r_unit = complex((view[1] - view[0]) / self._res[0])
 		i_unit = complex(0 + ((view[3] - view[2])/ self._res[1])*1j)
 		z0 = complex(view[0] + (view[2])*1j)
@@ -53,8 +53,14 @@ class julia:
 		total_progress = self._res[0] * self._res[1]
 		while (z0.imag < view[3]):
 			while (z0.real < view[1]):
-				if (self.is_bounded(z0)):
-                                    print('{0},{1}'.format(z0.real,z0.imag))
+				i = 0
+				z = z0
+				while(i < self._depth):
+					if (lazy_cmp(self._bounds,z)):
+						break
+					z = Q(z,self._c)
+					i = i + 1
+				print('{0},{1},{2}'.format(z0.real,z0.imag,float(i)/self._depth))
 				z0 = z0 + r_unit
 				progress = progress + 1;
 				progress_bar((progress/total_progress)*100)
@@ -62,4 +68,4 @@ class julia:
 			z0 = z0 + i_unit
 
 j = julia()
-j.filled_julia([0.0,0.8],2.0)
+j.filled_julia([0.0,0.5],2.0)
