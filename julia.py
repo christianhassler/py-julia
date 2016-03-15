@@ -1,15 +1,19 @@
 import sys
 import cmath
 import png
-from struct import pack
+import time
 from array import array 
 
 def F(z,c):
 	z2 = z * z;
 	return (z2 * z2) - z2 + c
 
-def progress_bar(progress):
-	sys.stderr.write('\r[{0}{1}] {2}%'.format('#'*int(progress),'-'*(100-int(progress)), progress)),
+# misc utils
+def progress_bar(p):
+	sys.stderr.write('\r[{0}{1}] {2:.2f}%'.format('#'*int(p),'-'*(100-int(p)), p)),
+
+def err_print(*args):
+	sys.stderr.write(''.join(map(str,args)) + '\n')
 
 # square bound test b/c the norm test takes too long
 def lazy_cmp(bounds, z):
@@ -43,43 +47,36 @@ def gen_rgb_gradient(color1,color2,saturation_color,e):
 	gradient.append(saturation_color)
 	return gradient
 
-def get_rgb(f):
-	saturation_point = 0.1
-	if (f == 1):
-		return [0x00,0x00,0x00]
-	elif (f > saturation_point):
-		f = saturation_point
-	red = int((f/saturation_point)*255)
-	print red
-	return [red,0x03,0xf0]
-
 class julia:
+	_f = staticmethod(F)
 	_c = 1.0 # control parameter
 	_bounds = [-2,2,-2,2] # if an orbit goes outside of this rectange, it is considered to be divergent
-	_res = [500,500] # resolution
-	_depth = 80 # number of iterations of F
+	_res = [512,512] # resolution
+	_depth = 150 # number of iterations of F
+	_gradient = []
+
+	_render_buf = [] # file buffer b/c pypng can't do byte streams (at least, I can't figure it out)
 
 	# generate the filled julia set as a png file
 	def filled_julia(self,center,zoom,filename):
 		# prepare the file
 		f = open(filename,'wb')
 		w = png.Writer(self._res[0],self._res[1])
-		buf = [] # file buffer b/c pypng can't do byte streams (at least, I can't figure it out)
 
 		# generate a color gradient
-		gradient = gen_rgb_gradient([0x00,0x00,0xff],[0xff,0xff,0xff], [0x00,0x00,0x00], 0.25)
+		self._gradient = gen_rgb_gradient([0x00,0x00,0xff],[0xff,0xff,0xff], [0x00,0x00,0x00], 0.25)
 		total_progress = float(self._res[0] * self._res[1])
 		depth_conv = 255.0 / float(self._depth)
 
 		# mathematical constants
-		bounds = self._bounds
-		view = [(center[0] + bounds[0]) / zoom, (center[0] + bounds[1]) / zoom, (center[1] + bounds[2]) / zoom, (center[1] + bounds[3]) / zoom]
+		view = [(center[0] + self._bounds[0]) / zoom, (center[0] + self._bounds[1]) / zoom, (center[1] + self._bounds[2]) / zoom, (center[1] + self._bounds[3]) / zoom]
 		r_unit = complex((view[1] - view[0]) / self._res[0]) # real unit
 		i_unit = complex(0 + ((view[3] - view[2])/ self._res[1])*1j) # imaginary unit
 
 		# iterated variables
 		z0 = complex(view[0] + (view[2])*1j)
 		progress = 0
+		t0 = time.clock()
 		for k in range(0,self._res[1]): # loop over imaginary numbers
 			row = array('B')
 			for j in range(0,self._res[0]): # loop over real numbers
@@ -88,10 +85,10 @@ class julia:
 				while (i <  self._depth):
 					if (lazy_cmp(self._bounds,z)):
 						break
-					z = F(z,self._c) # transfer function
+					z = self._f(z,self._c) # transfer function
 					i = i + 1
 				#print('{0},{1},{2}'.format(z0.real,z0.imag,float(i)/self._depth))
-				row.extend(gradient[int(i*depth_conv)])
+				row.extend(self._gradient[int(i*depth_conv)])
 				z0 = z0 + r_unit
 
 				# progress bar (comment out for speed)
@@ -99,9 +96,10 @@ class julia:
 				progress_bar((progress/total_progress)*100)
 			z0 = view[0] + z0.imag*1j
 			z0 = z0 + i_unit
-			buf.append(row)
-		w.write(f,buf)
+			self._render_buf.append(row)
+		w.write(f,self._render_buf)
 		f.close()
+		err_print('\nFinished in ',time.clock() - t0,'s!')
 
 j = julia()
 j.filled_julia([0.0,0.0],1.0,'filled_julia.png')
