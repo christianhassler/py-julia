@@ -54,40 +54,47 @@ def get_rgb(f):
 	return [red,0x03,0xf0]
 
 class julia:
-	_c = 1.0
-	_bounds = [-2,2,-2,2]
-	_res = [500,500]
-	_depth = 80
-	
-	def filled_julia(self,center,zoom):
-		f = open('filled_julia.png','wb')
+	_c = 1.0 # control parameter
+	_bounds = [-2,2,-2,2] # if an orbit goes outside of this rectange, it is considered to be divergent
+	_res = [500,500] # resolution
+	_depth = 80 # number of iterations of F
+
+	# generate the filled julia set as a png file
+	def filled_julia(self,center,zoom,filename):
+		# prepare the file
+		f = open(filename,'wb')
 		w = png.Writer(self._res[0],self._res[1])
+		buf = [] # file buffer b/c pypng can't do byte streams (at least, I can't figure it out)
 
-		bounds = self._bounds
-		view = [(center[0] + bounds[0]) / zoom, (center[0] + bounds[1]) / zoom, (center[1] + bounds[2]) / zoom, (center[1] + bounds[3]) / zoom]
-		r_unit = complex((view[1] - view[0]) / self._res[0])
-		i_unit = complex(0 + ((view[3] - view[2])/ self._res[1])*1j)
-		z0 = complex(view[0] + (view[2])*1j)
-
+		# generate a color gradient
 		gradient = gen_rgb_gradient([0x00,0x00,0xff],[0xff,0xff,0xff], [0x00,0x00,0x00], 0.25)
-
-		progress = 0
 		total_progress = float(self._res[0] * self._res[1])
 		depth_conv = 255.0 / float(self._depth)
-		buf = []
-		for k in range(0,self._res[1]):
+
+		# mathematical constants
+		bounds = self._bounds
+		view = [(center[0] + bounds[0]) / zoom, (center[0] + bounds[1]) / zoom, (center[1] + bounds[2]) / zoom, (center[1] + bounds[3]) / zoom]
+		r_unit = complex((view[1] - view[0]) / self._res[0]) # real unit
+		i_unit = complex(0 + ((view[3] - view[2])/ self._res[1])*1j) # imaginary unit
+
+		# iterated variables
+		z0 = complex(view[0] + (view[2])*1j)
+		progress = 0
+		for k in range(0,self._res[1]): # loop over imaginary numbers
 			row = array('B')
-			for j in range(0,self._res[0]):
+			for j in range(0,self._res[0]): # loop over real numbers
 				z = z0
 				i = 0
 				while (i <  self._depth):
 					if (lazy_cmp(self._bounds,z)):
 						break
-					z = F(z,self._c)
+					z = F(z,self._c) # transfer function
 					i = i + 1
 				#print('{0},{1},{2}'.format(z0.real,z0.imag,float(i)/self._depth))
 				row.extend(gradient[int(i*depth_conv)])
 				z0 = z0 + r_unit
+
+				# progress bar (comment out for speed)
 				progress = progress + 1
 				progress_bar((progress/total_progress)*100)
 			z0 = view[0] + z0.imag*1j
@@ -97,4 +104,4 @@ class julia:
 		f.close()
 
 j = julia()
-j.filled_julia([0.0,0.0],1.0)
+j.filled_julia([0.0,0.0],1.0,'filled_julia.png')
