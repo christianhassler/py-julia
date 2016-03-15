@@ -4,12 +4,12 @@ import png
 from struct import pack
 from array import array 
 
-def progress_bar(progress):
-	sys.stderr.write('\r[{0}{1}] {2}%'.format('#'*int(progress),'-'*(100-int(progress)), progress)),
-
 def F(z,c):
 	z2 = z * z;
 	return (z2 * z2) - z2 + c
+
+def progress_bar(progress):
+	sys.stderr.write('\r[{0}{1}] {2}%'.format('#'*int(progress),'-'*(100-int(progress)), progress)),
 
 # square bound test b/c the norm test takes too long
 def lazy_cmp(bounds, z):
@@ -54,14 +54,13 @@ def get_rgb(f):
 	return [red,0x03,0xf0]
 
 class julia:
-	_f = F
 	_c = 1.0
 	_bounds = [-2,2,-2,2]
 	_res = [500,500]
-	_depth = 250
+	_depth = 80
 	
 	def filled_julia(self,center,zoom):
-		f = open('test.png','wb')
+		f = open('filled_julia.png','wb')
 		w = png.Writer(self._res[0],self._res[1])
 
 		bounds = self._bounds
@@ -95,7 +94,7 @@ class julia:
 			z0 = z0 + i_unit
 			buf.append(row)
 		w.write(f,buf)
-			
+		f.close()
 
 j = julia()
 j.filled_julia([0.0,0.0],1.0)
