@@ -48,23 +48,22 @@ def gen_rgb_gradient(color1,color2,saturation_color,e):
 	return gradient
 
 class julia:
+	# TODO: this should be an instance method
 	_f = staticmethod(F)
-	_c = 1.0 # control parameter
-	_bounds = [-2,2,-2,2] # if an orbit goes outside of this rectange, it is considered to be divergent
-	_res = [512,512] # resolution
-	_depth = 150 # number of iterations of F
-	_gradient = []
 
-	_render_buf = [] # file buffer b/c pypng can't do byte streams (at least, I can't figure it out)
+	def __init__(self):
+		self._c = 1.0 # control parameter
+		self._bounds = [-2,2,-2,2] # if an orbit goes outside of this rectange, it is considered to be divergent
+		self._res = [512,512] # resolution
+		self._depth = 150 # number of iterations of F
+		self._gradient = []
+		self._render_buf = [] # file buffer b/c pypng can't do byte streams (at least, I can't figure it out)
 
-	# generate the filled julia set as a png file
-	def filled_julia(self,center,zoom,filename):
-		# prepare the file
-		f = open(filename,'wb')
-		w = png.Writer(self._res[0],self._res[1])
+	def generate_gradient(self, color1, color2, saturation_color, e):
+		self._gradient = gen_rgb_gradient(color1, color2, saturation_color, e)
 
+	def generate_filled(self,center,zoom):
 		# generate a color gradient
-		self._gradient = gen_rgb_gradient([0x00,0x00,0xff],[0xff,0xff,0xff], [0x00,0x00,0x00], 0.25)
 		total_progress = float(self._res[0] * self._res[1])
 		depth_conv = 255.0 / float(self._depth)
 
@@ -97,9 +96,16 @@ class julia:
 			z0 = view[0] + z0.imag*1j
 			z0 = z0 + i_unit
 			self._render_buf.append(row)
-		w.write(f,self._render_buf)
-		f.close()
 		err_print('\nFinished in ',time.clock() - t0,'s!')
 
+	def render_png(self,filename):
+		f = open(filename,'wb')
+		w = png.Writer(self._res[0],self._res[1])
+		w.write(f,self._render_buf)
+		f.close()
+		err_print('File saved: ', filename)
+
 j = julia()
-j.filled_julia([0.0,0.0],1.0,'filled_julia.png')
+j.generate_gradient([0x00,0x00,0xff],[0xff,0xff,0xff], [0x00,0x00,0x00], 0.25)
+j.generate_filled([0.0,0.0],1.0)
+j.render_png('filled_julia.png')
